@@ -7,6 +7,27 @@ import torch
 #        Model Evaluation Utilities
 # ========================================
 
+SYSTEM_PROMPT = (
+    "A conversation between User and Assistant. The user asks a question, and the Assistant solves it. "
+    "The assistant first thinks about the reasoning process in the mind and then provides the user with the answer. "
+    "The reasoning process and answer are enclosed within <think> </think> and <answer> </answer> tags, respectively."
+)
+
+def make_conversation(example):
+    direct_answer = ""
+    for line in example["answer"].split('\n'):
+        if line.startswith("#### "):
+            direct_answer = line.replace("#### ", "")
+            break
+    return {
+        "prompt": [
+            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "user", "content": example["question"]},
+        ],
+        "direct_answer": direct_answer
+    }
+
+
 def extract_tag(text: str, tag: str) -> str | None:
     pattern = fr".*?<{tag}>(.*?)</{tag}>.*?"
     match = re.match(pattern, text)
@@ -25,6 +46,7 @@ def generate_with_reasoning(prompt, model, tokenizer):
     end_time = time.time()
 
     generated_text = tokenizer.decode(output_ids[0], skip_special_tokens=True)
+    generated_text = generated_text[len(full_prompt):]
     duration = end_time - start_time
     num_input_tokens = inputs["input_ids"].shape[1]
     num_generated_tokens = output_ids.shape[1] - num_input_tokens

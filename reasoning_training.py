@@ -12,33 +12,15 @@ from pathlib import Path
 from typing import List
 
 import torch
+from tqdm import tqdm
 from datasets import load_dataset
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from peft import LoraConfig, get_peft_model
 from trl import GRPOConfig, GRPOTrainer
 from math_verify import LatexExtractionConfig, parse, verify
 
-from format_utils import extract_hashed_answer, extract_tag, generate_with_reasoning, print_inference_example
+from format_utils import extract_hashed_answer, extract_tag, generate_with_reasoning, print_inference_example, make_conversation
 
-SYSTEM_PROMPT = (
-    "A conversation between User and Assistant. The user asks a question, and the Assistant solves it. "
-    "The assistant first thinks about the reasoning process in the mind and then provides the user with the answer. "
-    "The reasoning process and answer are enclosed within <think> </think> and <answer> </answer> tags, respectively."
-)
-
-def make_conversation(example):
-    direct_answer = ""
-    for line in example["answer"].split('\n'):
-        if line.startswith("#### "):
-            direct_answer = line.replace("#### ", "")
-            break
-    return {
-        "prompt": [
-            {"role": "system", "content": SYSTEM_PROMPT},
-            {"role": "user", "content": example["question"]},
-        ],
-        "direct_answer": direct_answer
-    }
 
 # ========================================
 #             Reward Functions
@@ -100,6 +82,23 @@ def accuracy_reward(completions, **kwargs) -> List[float]:
     print("=" * 80)
     return [0]
 
+def evaluation(model, tokenizer, test_dataset):
+    correct = 0
+    for example in tqdm(test_dataset):
+        prompt = example["prompt"]
+        gold = example["direct_answer"]
+        generated_text, elapsed_time, num_generated_tokens = generate_with_reasoning(prompt, model, tokenizer)
+        pred = extract_tag(generated_text[len(prompt):], "answer")
+        import ipdb; ipdb.set_trace()
+        print(f"{pred=}, {gold=}")
+        if not pred:
+            continue
+        
+        if pred.strip() == gold.strip():
+            correct += 1
+    
+    print(f"{correct=}, {len(test_dataset)=}")
+    return correct / len(test_dataset)
 
 
 def main():
@@ -155,7 +154,7 @@ def main():
         learning_rate=1e-5,
         remove_unused_columns=False,
         gradient_accumulation_steps=16,  # default 16
-        num_train_epochs=100,
+        num_train_epochs=3,
         per_device_train_batch_size=8,  # default 8
         bf16=True,
         max_completion_length=64,
@@ -196,6 +195,8 @@ def main():
     print("Trained:")
     print_inference_example(trained_model, trained_tokenizer, test_dataset)
 
+    evaluation(trained_model, trained_tokenizer, test_dataset)
+
     del trained_model
     del trained_tokenizer
 
@@ -208,6 +209,7 @@ def main():
 
     print("Before Trained:")
     print_inference_example(untrained_model, untrained_tokenizer, test_dataset)
+
 
 
 if __name__ == '__main__':
