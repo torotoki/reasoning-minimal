@@ -1,3 +1,6 @@
+"""
+Module for training reasoning models.
+"""
 #!/usr/bin/env python
 # coding: utf-8
 
@@ -6,21 +9,20 @@
 # ========================================
 
 import re
-import time
 from pprint import pprint
 from pathlib import Path
 from typing import List
 
-import torch
-from tqdm import tqdm
 from datasets import load_dataset
 from transformers import AutoModelForCausalLM, AutoTokenizer
-from peft import LoraConfig, get_peft_model
 from trl import GRPOConfig, GRPOTrainer
 from math_verify import LatexExtractionConfig, parse, verify
-
-from format_utils import extract_hashed_answer, extract_tag, generate_with_reasoning, print_inference_example, make_conversation
-
+from format_utils import (
+    extract_hashed_answer,
+    extract_tag,
+    print_inference_example,
+    make_conversation,
+)
 
 # ========================================
 #             Reward Functions
@@ -69,7 +71,8 @@ def accuracy_reward_hf(completions, **kwargs):
 def accuracy_reward(completions, **kwargs) -> List[float]:
     """Debugging version of accuracy_reward."""
     solutions = kwargs["answer"]
-    predictions = [completion[0]["content"] for completion in completions]
+    predictions = [completion[0]["content"]
+                   for completion in completions]
     print(len(predictions), len(solutions))
     print("question=")
     pprint(kwargs["question"])
@@ -82,24 +85,6 @@ def accuracy_reward(completions, **kwargs) -> List[float]:
     print("=" * 80)
     return [0]
 
-def evaluation(model, tokenizer, test_dataset):
-    correct = 0
-    for example in tqdm(test_dataset):
-        prompt = example["prompt"]
-        gold = example["direct_answer"]
-        generated_text, elapsed_time, num_generated_tokens = generate_with_reasoning(prompt, model, tokenizer)
-        pred = extract_tag(generated_text[len(prompt):], "answer")
-        import ipdb; ipdb.set_trace()
-        print(f"{pred=}, {gold=}")
-        if not pred:
-            continue
-        
-        if pred.strip() == gold.strip():
-            correct += 1
-    
-    print(f"{correct=}, {len(test_dataset)=}")
-    return correct / len(test_dataset)
-
 
 def main():
     # ========================================
@@ -107,7 +92,8 @@ def main():
     # ========================================
 
     dataset_id = "openai/gsm8k"
-    train_dataset, test_dataset = load_dataset(dataset_id, 'main', split=['train[:5%]', 'test[:5%]'])
+    train_dataset, test_dataset = \
+        load_dataset(dataset_id, 'main', split=['train[:5%]', 'test[:5%]'])
 
     print(train_dataset)
     pprint(train_dataset[0])
@@ -195,8 +181,6 @@ def main():
     print("Trained:")
     print_inference_example(trained_model, trained_tokenizer, test_dataset)
 
-    evaluation(trained_model, trained_tokenizer, test_dataset)
-
     del trained_model
     del trained_tokenizer
 
@@ -209,7 +193,6 @@ def main():
 
     print("Before Trained:")
     print_inference_example(untrained_model, untrained_tokenizer, test_dataset)
-
 
 
 if __name__ == '__main__':
