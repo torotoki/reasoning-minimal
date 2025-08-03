@@ -31,4 +31,4 @@ python train.py
 - [TRL (Transformers Reinforcement Learning)](https://github.com/huggingface/trl)  
 - [Qwen 2.5 models](https://huggingface.co/Qwen)  
 - [GSM8K dataset](https://github.com/openai/grade-school-math)  
-- [math_verify](https://github.com/OpenAI/verify-math)
+- [math_verify](https://github.com/huggingface/Math-Verify)
