@@ -7,26 +7,30 @@ from tqdm import tqdm
 from transformers import AutoModelForCausalLM, AutoTokenizer, AutoModel
 from format_utils import generate_with_reasoning, extract_tag, make_conversation
 
+
 def evaluation(model, tokenizer, test_dataset):
     correct = 0
     no_answer = 0
     for example in tqdm(test_dataset):
         prompt = example["prompt"]
         gold = example["direct_answer"]
-        generated_text, elapsed_time, num_generated_tokens = generate_with_reasoning(prompt, model, tokenizer)
+        generated_text, elapsed_time, num_generated_tokens = generate_with_reasoning(
+            prompt, model, tokenizer)
         pred = extract_tag(generated_text, "answer")
         if not pred:
             no_answer += 1
             continue
-        
+
         if pred.strip() == gold.strip():
             correct += 1
-    
+
     print(f"{correct=}, {len(test_dataset)=}, {no_answer=}")
     return correct / len(test_dataset)
 
+
 def main():
-    parser = argparse.ArgumentParser(description="Evaluate a language model on GSM8K subset.")
+    parser = argparse.ArgumentParser(
+        description="Evaluate a language model on GSM8K subset.")
     parser.add_argument(
         "--model-path-or-dir",
         type=str,
@@ -45,6 +49,7 @@ def main():
     )
     tokenizer = AutoTokenizer.from_pretrained(args.model_path_or_dir)
     evaluation(model, tokenizer, test_dataset)
+
 
 if __name__ == "__main__":
     main()

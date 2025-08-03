@@ -16,6 +16,7 @@ SYSTEM_PROMPT = (
     "<think> </think> and <answer> </answer> tags, respectively."
 )
 
+
 def make_conversation(example):
     direct_answer = ""
     for line in example["answer"].split('\n'):
@@ -36,8 +37,10 @@ def extract_tag(text: str, tag: str) -> str | None:
     match = re.match(pattern, text)
     return match.group(1) if match else None
 
+
 def extract_hashed_answer(text: str) -> str | None:
     return text.split("####")[1].strip()
+
 
 def generate_with_reasoning(prompt, model, tokenizer):
     full_prompt = " ".join(entry["content"] for entry in prompt)
@@ -56,16 +59,18 @@ def generate_with_reasoning(prompt, model, tokenizer):
 
     return generated_text, duration, num_generated_tokens
 
+
 def print_inference_example(model, tokenizer, dataset):
     prompt = dataset["prompt"][0]
-    generated_text, inference_duration, num_generated_tokens = generate_with_reasoning(prompt, model, tokenizer)
+    generated_text, inference_duration, num_generated_tokens = generate_with_reasoning(
+        prompt, model, tokenizer)
 
     print(f"Inference time: {inference_duration:.2f} seconds")
     print(f"Generated tokens: {num_generated_tokens}")
     prompt_text = " ".join(entry["content"] for entry in prompt)
-    print("="*80)
+    print("=" * 80)
     print(prompt_text)
-    print("="*80)
+    print("=" * 80)
     response_text = generated_text[len(prompt_text):].strip()
     print(response_text)
-    print("="*80)
+    print("=" * 80)

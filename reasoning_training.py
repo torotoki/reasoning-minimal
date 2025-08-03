@@ -28,6 +28,7 @@ from format_utils import (
 #             Reward Functions
 # ========================================
 
+
 def format_reward(completions, **kwargs):
     """Check if the completion matches required format."""
     rewards = []
@@ -64,7 +65,7 @@ def accuracy_reward_hf(completions, **kwargs):
     verbose = True
     if verbose:
         print(contents[0])
-        print("="*80)
+        print("=" * 80)
     return rewards
 
 
@@ -146,7 +147,7 @@ def main():
         max_completion_length=64,
         num_generations=4,
         max_prompt_length=128,
-        report_to=["wandb"], # ["wandb"],
+        report_to=["wandb"],  # ["wandb"],
         logging_steps=1,
         push_to_hub=False,
         save_strategy="steps",
@@ -165,7 +166,6 @@ def main():
     )
     trainer.train()
     trainer.save_model(training_args.output_dir)
-
 
     # ========================================
     #            Inference Example

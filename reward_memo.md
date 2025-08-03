@@ -1,4 +1,4 @@
-```json
+```py
 4 4
 
 question = ['Alex has 2 cakes that are each cut into 8 slices. A fourth of the slices are '
