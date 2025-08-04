@@ -34,7 +34,7 @@ def main():
     parser.add_argument(
         "--model-path-or-dir",
         type=str,
-        default="./outputs/Qwen2-0.5B-GRPO-test",
+        default="./outputs/Qwen2.5-0.5B-GRPO-test",
     )
     args = parser.parse_args()
 

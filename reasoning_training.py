@@ -5,9 +5,10 @@ Module for training reasoning models.
 # coding: utf-8
 
 # ========================================
-#             Imports & Configs
+#             Imports
 # ========================================
 
+import argparse
 import re
 from pprint import pprint
 from pathlib import Path
@@ -89,6 +90,17 @@ def accuracy_reward(completions, **kwargs) -> List[float]:
 
 def main():
     # ========================================
+    #         Argument Parser
+    # ========================================
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--model-path-or-dir",
+        type=str,
+        default="Qwen/Qwen2.5-0.5B-Instruct"
+    )
+    args = parser.parse_args()
+
+    # ========================================
     #         Load & Preprocess Dataset
     # ========================================
 
@@ -108,7 +120,7 @@ def main():
     #              Load Model
     # ========================================
 
-    model_id = "Qwen/Qwen2.5-0.5B-Instruct"
+    model_id = args.model_path_or_dir
     model = AutoModelForCausalLM.from_pretrained(
         model_id,
         torch_dtype="auto",
@@ -134,7 +146,7 @@ def main():
     #         Training Configuration
     # ========================================
 
-    output_dir = Path("outputs/Qwen2-0.5B-GRPO-test")
+    output_dir = Path(f"outputs/{model_id}-GRPO")
 
     training_args = GRPOConfig(
         output_dir=output_dir,
