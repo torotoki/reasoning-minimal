@@ -45,30 +45,59 @@ def format_reward(completions, **kwargs):
         rewards.append(score)
     return rewards
 
-
-def accuracy_reward_hf(completions, **kwargs):
+def accuracy_reward_cot(completions, **kwargs):
     """Use math_verify to check correctness of answer extraction."""
     solutions = kwargs["answer"]
     contents = [completion[0]["content"] for completion in completions]
     rewards = []
     for content, solution in zip(contents, solutions):
-        score = 0.0
-        gold = parse(solution, "first_match", [LatexExtractionConfig()])
-        pred = parse(content, "first_match", [LatexExtractionConfig()])
-        try:
-            score += float(verify(pred, gold) if gold else 1.0)
-        except Exception:
-            pass
-        pred_answer = extract_tag(content, "answer")
-        if pred_answer and pred_answer.strip() == extract_hashed_answer(solution):
-            score += 1.0
-        rewards.append(score)
+        reward = 0.0
+        cot_pred_raw = extract_tag(content, "think")
+        if not cot_pred_raw:
+            rewards.append(reward)
+            continue
+        cot_pred = list(filter(lambda x: x.strip(),
+                               cot_pred_raw.split('\n')))
+        cot_gold = solution.split('####')[0].split('\n')
+
+        # Rewards for the length of Chaing-of-Thought
+        if len(cot_pred) == len(cot_gold):
+            reward += 1.0
+        elif len(cot_pred) < len(cot_gold):
+            reward += len(cot_pred) / len(cot_gold)
+        elif len(cot_pred) > len(cot_gold):
+            reward += 1.0 - len(cot_pred) / len(cot_gold)
+
+        for thought_pred, thought_gold in zip(cot_pred, cot_gold):
+            gold = parse(thought_gold, "first_match", [LatexExtractionConfig()])
+            pred = parse(thought_pred, "first_match", [LatexExtractionConfig()])
+
+            try:
+                reward += float(verify(pred, gold)) if gold else 1.0
+            except Exception:
+                reward += 0.0
+            
+            if pred:
+                reward += 0.5
+
+        rewards.append(reward)
+    return rewards
+
+def accuracy_reward_answer(completions, **kwargs):
+    solutions = kwargs["answer"]
+    contents = [completion[0]["content"] for completion in completions]
+    rewards = []
+    for content, solution in zip(contents, solutions):
+        reward = 0.0
+        pred = extract_tag(content, "answer")
+        gold = solution.split('####')[1].strip()
+        reward += 2.0 if verify(pred, gold) else 1.0
+        rewards.append(reward)
     verbose = True
     if verbose:
         print(contents[0])
         print("=" * 80)
     return rewards
-
 
 def accuracy_reward(completions, **kwargs) -> List[float]:
     """Debugging version of accuracy_reward."""
@@ -97,6 +126,11 @@ def main():
         "--model-path-or-dir",
         type=str,
         default="Qwen/Qwen2.5-0.5B-Instruct"
+    )
+    parser.add_argument(
+        "--epochs",
+        type=int,
+        default=3
     )
     args = parser.parse_args()
 
@@ -153,7 +187,7 @@ def main():
         learning_rate=1e-5,
         remove_unused_columns=False,
         gradient_accumulation_steps=16,  # default 16
-        num_train_epochs=3,
+        num_train_epochs=args.epochs,
         per_device_train_batch_size=8,  # default 8
         bf16=True,
         max_completion_length=64,
@@ -172,7 +206,11 @@ def main():
 
     trainer = GRPOTrainer(
         model=model,
-        reward_funcs=[format_reward, accuracy_reward_hf],
+        reward_funcs=[
+            format_reward,
+            accuracy_reward_answer,
+            accuracy_reward_cot
+        ],
         args=training_args,
         train_dataset=train_dataset
     )

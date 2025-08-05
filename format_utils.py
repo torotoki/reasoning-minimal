@@ -13,7 +13,8 @@ SYSTEM_PROMPT = (
     "The assistant first thinks about the reasoning process "
     "in the mind and then provides the user with the answer. "
     "The reasoning process and answer are enclosed within "
-    "<think> </think> and <answer> </answer> tags, respectively."
+    "<think> </think> and <answer> </answer> tags, respectively. "
+    "The reasoning process in <think> </think> must be separated by lines."
 )
 
 
@@ -48,7 +49,8 @@ def generate_with_reasoning(prompt, model, tokenizer):
 
     start_time = time.time()
     with torch.no_grad():
-        output_ids = model.generate(**inputs, max_length=500)
+        # max_new_token on the model will take precedence
+        output_ids = model.generate(**inputs)
     end_time = time.time()
 
     generated_text = tokenizer.decode(output_ids[0], skip_special_tokens=True)
