@@ -6,7 +6,7 @@ The model is trained to output
 * a private chain-of-thought wrapped in **\<think>...\</think>**
 * a final answer wrapped in **\<answer>...\</answer>**
 
-Two custom reward functions enforce **format correctness** and **answer accuracy** simultaneously.
+Two types of reward functions enforce **format correctness** and **answer and chain-of-thought accuracy** simultaneously.
 
 ---
 
