@@ -190,9 +190,9 @@ def main():
         num_train_epochs=args.epochs,
         per_device_train_batch_size=8,  # default 8
         bf16=True,
-        max_completion_length=64,
+        max_completion_length=400,
         num_generations=4,
-        max_prompt_length=128,
+        max_prompt_length=512,
         report_to=["wandb"],  # ["wandb"],
         logging_steps=1,
         push_to_hub=False,

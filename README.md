@@ -23,7 +23,8 @@ Two custom reward functions enforce **format correctness** and **answer accuracy
 ## 🚀 Setup & Usage
 ```bash
 pip install torch transformers datasets peft trl math_verify wandb
-python train.py
+python train.py --model-path-or-dir Qwen/Qwen2.5-0.5B-Instruct
+python evaluation.py --model-path-or-dir outputs/Qwen/Qwen2.5-0.5B-Instruct
 ```
 
 ## References & Acknowledgements
